@@ -45,6 +45,7 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 
 ```bash
 bun run dev       # Local dev server
-bun run check     # Lint (Biome) + type check (tsc)
-bun run fix       # Auto-fix lint issues
+bun run check     # Type check (tsc) + lint (ESLint) + format check (Prettier)
+bun run fix       # Auto-fix lint and format issues
+bun test          # Run unit tests
 ```

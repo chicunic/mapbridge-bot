@@ -2,19 +2,46 @@
   "name": "mapbridge-bot",
   "version": "1.0.0",
   "private": true,
+  "description": "Telegram bot that converts map links between Google Maps and Apple Maps",
+  "keywords": [
+    "telegram-bot",
+    "google-maps",
+    "apple-maps",
+    "cloudflare-workers",
+    "hono",
+    "typescript"
+  ],
+  "license": "MIT",
+  "author": "chicunic",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chicunic/mapbridge-bot.git"
+  },
+  "type": "module",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "check": "biome check && tsc --noEmit",
-    "fix": "biome check --fix"
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
+    "check": "tsc && tsc -p tests && eslint . && prettier --check .",
+    "fix": "eslint . --fix && prettier --write .",
+    "prepare": "husky"
   },
   "dependencies": {
-    "hono": "^4.12.9"
+    "hono": "^4.12.30"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.8",
-    "@cloudflare/workers-types": "^4.20260317.1",
-    "typescript": "^6.0.2",
-    "wrangler": "^4.76.0"
+    "@cloudflare/workers-types": "^5.20260716.1",
+    "@eslint/js": "^10.0.1",
+    "@types/bun": "^1.3.14",
+    "eslint": "^10.7.0",
+    "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
+    "jiti": "^2.7.0",
+    "prettier": "^3.9.5",
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.64.0",
+    "wrangler": "^4.111.0"
   }
 }

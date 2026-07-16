@@ -2,7 +2,7 @@
 
 [![Cloudflare Workers](https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&logoColor=white)](https://workers.cloudflare.com/)
 [![Telegram Bot](https://img.shields.io/badge/Telegram-Bot-26A5E4?logo=telegram&logoColor=white)](https://core.telegram.org/bots)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![Hono](https://img.shields.io/badge/Hono-4-E36002?logo=hono&logoColor=white)](https://hono.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -18,10 +18,10 @@ A Telegram bot that instantly converts map links between Google Maps and Apple M
 
 Send any Google Maps or Apple Maps link to the bot, and it will reply with the equivalent link for the other platform.
 
-| You send | Bot replies |
-| - | - |
-| Google Maps link | Apple Maps link |
-| Apple Maps link | Google Maps link |
+| You send         | Bot replies      |
+| ---------------- | ---------------- |
+| Google Maps link | Apple Maps link  |
+| Apple Maps link  | Google Maps link |
 
 ## Supported Links
 
@@ -40,6 +40,8 @@ Send any Google Maps or Apple Maps link to the bot, and it will reply with the e
 ## How It Works
 
 The bot extracts location data (coordinates, place name, address) from the source link and builds an equivalent link for the target platform. Short links are resolved by following redirects to obtain the full URL with location details.
+
+When a Google Maps link contains no coordinates (common for links shared from the mobile app), the bot geocodes the place text through Google's embed endpoint to recover them, so the converted Apple Maps link is anchored to the exact location instead of relying on a text search.
 
 ## Self-Hosting
 

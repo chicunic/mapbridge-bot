@@ -1,32 +1,42 @@
-node_modules/
-dist/
-
 # Logs
+logs
 *.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+*.local
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Test coverage
+coverage
 
 # Environment variables
 .env
-.env.*
+.env.local
+.env.*.local
 !.env.example
 
-# TypeScript
-*.tsbuildinfo
-
-# Coverage
-coverage/
-
-# local
-*local/
-*temp/
-
-# macOS
+# Editor directories and files
+.idea
 .DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
 # Wrangler
 .wrangler/
 .dev.vars
 
-# AI Agents
+# AI tools
 .claude/
 .cursor/
 .windsurf/
@@ -42,3 +52,7 @@ coverage/
 .v0/
 .gemini/
 .mcp.json
+
+# Temporary files
+**/.temp/
+**/.local/

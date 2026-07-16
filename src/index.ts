@@ -67,7 +67,7 @@ const URL_CHARS = String.raw`[A-Za-z0-9_\-~:/?#[\]@!$&'()*+,;=.%]`;
 const MAP_PATTERNS: { source: MapSource; pattern: RegExp }[] = [
   { source: "google", pattern: new RegExp(`https?://maps\\.app\\.goo\\.gl/${URL_CHARS}+`) },
   { source: "google", pattern: new RegExp(`https?://goo\\.gl/maps/${URL_CHARS}+`) },
-  { source: "google", pattern: new RegExp(`https?://(?:www\\.)?google\\.\\w+/maps/${URL_CHARS}+`) },
+  { source: "google", pattern: new RegExp(`https?://(?:www\\.)?google(?:\\.\\w+){1,2}/maps/${URL_CHARS}+`) },
   { source: "apple", pattern: new RegExp(`https?://maps\\.apple/${URL_CHARS}+`) },
   { source: "apple", pattern: new RegExp(`https?://maps\\.apple\\.com/${URL_CHARS}+`) },
 ];
@@ -95,18 +95,18 @@ async function resolveUrl(shortUrl: string): Promise<string> {
 }
 
 function parseCoordString(s: string): { lat: number; lng: number } | null {
-  const match = s.match(/^(-?\d+\.?\d*),(-?\d+\.?\d*)$/);
+  const match = /^(-?\d+\.?\d*),(-?\d+\.?\d*)$/.exec(s);
   if (!match) return null;
   return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
 }
 
 function extractCoordsFromGoogleUrl(url: string): { lat: number; lng: number } | null {
   // !3d<lat>!4d<lng> in URL path/data
-  const dMatch = url.match(/!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/);
+  const dMatch = /!3d(-?\d+\.?\d*)!4d(-?\d+\.?\d*)/.exec(url);
   if (dMatch) return { lat: parseFloat(dMatch[1]), lng: parseFloat(dMatch[2]) };
 
   // @lat,lng in URL path
-  const atMatch = url.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
+  const atMatch = /@(-?\d+\.?\d*),(-?\d+\.?\d*)/.exec(url);
   if (atMatch) return { lat: parseFloat(atMatch[1]), lng: parseFloat(atMatch[2]) };
 
   // q=lat,lng as coordinates
@@ -123,7 +123,7 @@ function extractCoordsFromGoogleUrl(url: string): { lat: number; lng: number } |
 function parseGoogleMaps(url: string): MapLocation | null {
   const coords = extractCoordsFromGoogleUrl(url);
 
-  const placeMatch = url.match(/\/place\/([^/@]+)/);
+  const placeMatch = /\/place\/([^/@]+)/.exec(url);
   const nameFromPath = placeMatch ? decodeURIComponent(placeMatch[1].replace(/\+/g, " ")) : undefined;
 
   if (coords) {
@@ -178,12 +178,33 @@ function parseAppleMaps(url: string): MapLocation | null {
   return null;
 }
 
+// Google place names may carry emoji prefixes (e.g. "🅿miyanohiradai...") that break search
+function cleanPlaceName(name: string): string {
+  return name.replace(/^[^\p{L}\p{N}]+/u, "").trim();
+}
+
+// Share links from the Google Maps app resolve to ?q=<text>&ftid=... with no coordinates;
+// the embed endpoint geocodes the same text through Google's own place data
+async function geocodeViaGoogleEmbed(query: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const url = `https://www.google.com/maps?q=${encodeURIComponent(query)}&output=embed`;
+    const response = await fetch(url, { redirect: "follow", signal: AbortSignal.timeout(10_000) });
+    if (!response.ok) return null;
+    const html = await response.text();
+    const match = /\[(-?\d{1,2}\.\d{4,}),(-?\d{1,3}\.\d{4,})\]/.exec(html);
+    if (!match) return null;
+    return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+  } catch {
+    return null;
+  }
+}
+
 function buildAppleMapsUrl(loc: MapLocation): string {
   const params = new URLSearchParams();
   if (loc.lat !== undefined && loc.lng !== undefined) {
     params.set("ll", `${loc.lat},${loc.lng}`);
   }
-  if (loc.name) params.set("q", loc.name);
+  if (loc.name) params.set("q", cleanPlaceName(loc.name));
   if (loc.address) params.set("address", loc.address);
   return `https://maps.apple.com/?${params.toString()}`;
 }
@@ -212,7 +233,15 @@ async function convertMapUrl(mapLink: DetectedMapUrl): Promise<string> {
     throw new Error("Could not extract location from the URL");
   }
 
-  return mapLink.source === "google" ? buildAppleMapsUrl(loc) : buildGoogleMapsUrl(loc);
+  if (mapLink.source === "google") {
+    if (loc.lat === undefined || loc.lng === undefined) {
+      const query = [loc.name, loc.address].filter(Boolean).join(", ");
+      const coords = await geocodeViaGoogleEmbed(query);
+      if (coords) Object.assign(loc, coords);
+    }
+    return buildAppleMapsUrl(loc);
+  }
+  return buildGoogleMapsUrl(loc);
 }
 
 async function sendTelegramMessage(token: string, chatId: number, text: string): Promise<void> {
@@ -228,4 +257,5 @@ async function sendTelegramMessage(token: string, chatId: number, text: string):
   }
 }
 
+export { extractMapUrl, parseGoogleMaps, parseAppleMaps, buildAppleMapsUrl, buildGoogleMapsUrl, convertMapUrl };
 export default app;

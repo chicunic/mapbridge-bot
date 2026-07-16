@@ -1,0 +1,11 @@
+*
+!*.js
+!*.ts
+!*.json
+!*.md
+!*.yaml
+!*.yml
+!.vscode/
+!src/
+!tests/
+bun.lock
